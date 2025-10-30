@@ -5,7 +5,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Star, Bookmark } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getCompatibilityScore } from '@/services/aiService'
-import { toggleBookmark, isBookmarked as checkBookmarkStatus } from '@/services/bookmarkService'
 import { showBookmarkNotification } from '@/services/notificationService'
 
 interface Profile {
@@ -43,45 +42,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     ? getCompatibilityScore(currentUserProfile, profile)
     : Math.floor(Math.random() * 30) + 70
 
-  // Check initial bookmark status
-  useEffect(() => {
-    if (currentUserId && profile.id) {
-      checkBookmarkStatus(currentUserId, profile.id).then(setIsBookmarked)
-    }
-  }, [currentUserId, profile.id])
-
   const handleBookmark = async () => {
-    if (!currentUserId) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to bookmark profiles",
-        variant: "destructive"
-      })
-      return
-    }
-
-    try {
-      const success = await toggleBookmark(currentUserId, profile.id)
-      if (success) {
-        const newBookmarkStatus = !isBookmarked
-        setIsBookmarked(newBookmarkStatus)
-
-        showBookmarkNotification(newBookmarkStatus, profile.username)
-
-        // Notify parent component of bookmark change
-        if (onBookmarkChange) {
-          onBookmarkChange()
-        }
-      } else {
-        throw new Error('Failed to update bookmark')
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update bookmark. Please try again.",
-        variant: "destructive"
-      })
-    }
+    // Bookmark functionality temporarily disabled
+    toast({
+      title: "Coming Soon",
+      description: "Bookmark feature will be available soon!",
+    })
   }
 
   if (isLoading) {

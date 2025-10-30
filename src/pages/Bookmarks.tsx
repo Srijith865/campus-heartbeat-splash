@@ -4,7 +4,6 @@ import { ArrowLeft, BookmarkX, Heart } from 'lucide-react'
 import TopBar from '@/components/TopBar'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { getBookmarkedProfiles } from '@/services/bookmarkService'
 import { Profile } from '@/services/aiService'
 import ProfileCard from '@/components/ProfileCard'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -31,10 +30,9 @@ const Bookmarks = () => {
       }
 
       setCurrentUserId(user.id)
-
-      // Fetch bookmarked profiles
-      const profiles = await getBookmarkedProfiles(user.id)
-      setBookmarkedProfiles(profiles)
+      
+      // Bookmarks feature temporarily disabled
+      setBookmarkedProfiles([])
     } catch (error) {
       console.error('Error fetching bookmarks:', error)
     } finally {

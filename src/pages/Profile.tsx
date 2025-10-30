@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/integrations/supabase/client'
 import { Profile } from '@/services/aiService'
 import { getCompatibilityScore } from '@/services/aiService'
-import { toggleBookmark, isBookmarked as checkBookmarkStatus } from '@/services/bookmarkService'
 import TopBar from '@/components/TopBar'
 
 const ProfilePage: React.FC = () => {
@@ -107,35 +106,12 @@ const ProfilePage: React.FC = () => {
   }
 
   const handleBookmark = async () => {
-    if (!currentUserId || !profile) return
-
-    try {
-      const success = await toggleBookmark(currentUserId, profile.id)
-      if (success) {
-        const newBookmarkStatus = !isBookmarked
-        setIsBookmarked(newBookmarkStatus)
-        toast({
-          title: newBookmarkStatus ? "Bookmarked" : "Bookmark removed",
-          description: newBookmarkStatus 
-            ? `${profile.username} added to bookmarks` 
-            : `${profile.username} removed from bookmarks`,
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update bookmark. Please try again.",
-        variant: "destructive"
-      })
-    }
+    // Bookmark functionality temporarily disabled
+    toast({
+      title: "Coming Soon",
+      description: "Bookmark feature will be available soon!",
+    })
   }
-
-  // Check bookmark status
-  useEffect(() => {
-    if (currentUserId && profile) {
-      checkBookmarkStatus(currentUserId, profile.id).then(setIsBookmarked)
-    }
-  }, [currentUserId, profile])
 
   if (isLoading) {
     return (
