@@ -42,9 +42,15 @@ export const Login = () => {
           .from('profiles')
           .select('email')
           .eq('username', formData.emailOrUsername)
-          .single()
+          .maybeSingle()
 
-        if (profileError || !profileData?.email) {
+        if (profileError) {
+          console.error("Profile lookup error:", profileError)
+          toast.error("Error looking up username. Please try again.")
+          return
+        }
+
+        if (!profileData || !profileData.email) {
           toast.error("Username not found. Please check your username.")
           return
         }
