@@ -34,8 +34,26 @@ export const Login = () => {
     }
 
     try {
+      let emailToUse = formData.emailOrUsername
+
+      // If input is not an email, treat it as username and fetch email from profiles
+      if (!isEmailValid) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('username', formData.emailOrUsername)
+          .single()
+
+        if (profileError || !profileData?.email) {
+          toast.error("Username not found. Please check your username.")
+          return
+        }
+
+        emailToUse = profileData.email
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.emailOrUsername,
+        email: emailToUse,
         password: formData.password
       })
 
