@@ -58,7 +58,6 @@ const ProfilePage: React.FC = () => {
         setProfile(profileData)
       }
     } catch (error) {
-      console.error('Error fetching profile:', error)
       toast({
         title: "Profile not found",
         description: "This profile doesn't exist or is not available",
@@ -101,7 +100,7 @@ const ProfilePage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching current user:', error)
+      // Error fetching current user
     }
   }
 
