@@ -74,21 +74,6 @@ export const CreateAccount = () => {
     isBioValid &&
     isAgeValid
 
-  // Debug logging for validation state
-  const validationState = {
-    hasUsername: formData.username.trim().length > 0,
-    isUsernameAvailable,
-    isEmailValid,
-    isPasswordStrong,
-    passwordsMatch,
-    hasPhotos: formData.photos.length > 0,
-    hasPersonality: formData.personality !== '',
-    hasInterests: formData.interests.length > 0,
-    isBioValid,
-    isFormValid
-  }
-  
-  console.log("Final validation state:", validationState)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -142,7 +127,6 @@ export const CreateAccount = () => {
         if (authData.session) {
           // User is auto-confirmed and logged in
           toast.success("Account created successfully! 🎉")
-          console.log("Account created with photos:", formData.photos)
           
           // Navigate to feed page after successful account creation
           setTimeout(() => {
@@ -157,7 +141,6 @@ export const CreateAccount = () => {
         }
       }
     } catch (error: any) {
-      console.error("Account creation error:", error)
       toast.error(error.message || "Failed to create account. Please try again.")
     } finally {
       setIsSubmitting(false)

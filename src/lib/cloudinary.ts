@@ -5,14 +5,6 @@ export const CLOUDINARY_CONFIG = {
 }
 
 export const uploadToCloudinary = async (file: File): Promise<string> => {
-  console.log('Starting Cloudinary upload:', {
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type,
-    cloudName: CLOUDINARY_CONFIG.cloudName,
-    uploadPreset: CLOUDINARY_CONFIG.uploadPreset
-  })
-
   const formData = new FormData()
   formData.append('file', file)
   formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset)
@@ -26,15 +18,8 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
       }
     )
 
-    console.log('Cloudinary response status:', response.status)
-
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Cloudinary API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText
-      })
 
       // Handle specific 400 error for upload preset issues
       if (response.status === 400) {
@@ -45,15 +30,8 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
     }
 
     const data = await response.json()
-    console.log('Cloudinary upload successful:', {
-      secure_url: data.secure_url,
-      public_id: data.public_id
-    })
-    
     return data.secure_url
   } catch (error) {
-    console.error('Cloudinary upload error:', error)
-    
     // Provide more specific error messages
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error('Network error - please check your internet connection')
