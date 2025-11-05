@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Check, X, Loader2 } from "lucide-react"
 import { FormInput } from "./form-input"
+import { supabase } from "@/integrations/supabase/client"
 
 interface UsernameInputProps {
   value: string
@@ -10,11 +11,8 @@ interface UsernameInputProps {
   onAvailabilityChange: (available: boolean) => void
 }
 
-// Mock usernames for demo - replace with actual API call
-const mockTakenUsernames = ["john_doe", "sarah_m", "alex123", "emma_wilson", "mike_johnson"]
-
 const generateSuggestions = (username: string): string[] => {
-  const base = username.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+  const base = username.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()
   return [
     `${base}_${Math.floor(Math.random() * 999)}`,
     `${base}${new Date().getFullYear()}`,
@@ -37,19 +35,39 @@ export const UsernameInput = ({ value, onChange, onAvailabilityChange }: Usernam
 
     setIsChecking(true)
     
-    const checkAvailability = setTimeout(() => {
-      const isTaken = mockTakenUsernames.includes(value.toLowerCase())
-      setIsAvailable(!isTaken)
-      onAvailabilityChange(!isTaken)
-      
-      if (isTaken) {
-        setSuggestions(generateSuggestions(value))
-      } else {
-        setSuggestions([])
+    const checkAvailability = setTimeout(async () => {
+      try {
+        // Check if username exists in the database
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .ilike('username', value)
+          .maybeSingle()
+        
+        if (error) {
+          setIsAvailable(null)
+          onAvailabilityChange(false)
+          setIsChecking(false)
+          return
+        }
+
+        const isTaken = !!data
+        setIsAvailable(!isTaken)
+        onAvailabilityChange(!isTaken)
+        
+        if (isTaken) {
+          setSuggestions(generateSuggestions(value))
+        } else {
+          setSuggestions([])
+        }
+        
+        setIsChecking(false)
+      } catch (error) {
+        setIsAvailable(null)
+        onAvailabilityChange(false)
+        setIsChecking(false)
       }
-      
-      setIsChecking(false)
-    }, 400)
+    }, 500)
 
     return () => clearTimeout(checkAvailability)
   }, [value, onAvailabilityChange])

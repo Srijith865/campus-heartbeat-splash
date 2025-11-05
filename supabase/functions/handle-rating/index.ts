@@ -30,19 +30,42 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { rated_id, rating_value } = await req.json()
+    const body = await req.json()
+    const { rated_id, rating_value } = body
 
+    // Validate input format
     if (!rated_id || typeof rating_value !== 'number') {
       throw new Error('Missing required fields: rated_id and rating_value')
     }
 
-    if (rating_value < 1 || rating_value > 10) {
-      throw new Error('Rating must be between 1 and 10')
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(rated_id)) {
+      throw new Error('Invalid rated_id format')
+    }
+
+    // Validate rating is integer between 1-10
+    if (!Number.isInteger(rating_value) || rating_value < 1 || rating_value > 10) {
+      throw new Error('Rating must be an integer between 1 and 10')
     }
 
     const rater_id = user.id
 
-    console.log(`Rating: ${rater_id} rates ${rated_id} with ${rating_value}`)
+    // Prevent self-rating
+    if (rated_id === rater_id) {
+      throw new Error('Cannot rate yourself')
+    }
+
+    // Verify rated user exists
+    const { data: ratedUser, error: userCheckError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', rated_id)
+      .single()
+
+    if (userCheckError || !ratedUser) {
+      throw new Error('Rated user not found')
+    }
 
     // Insert or update the rating
     const { error: ratingError } = await supabase
@@ -56,7 +79,6 @@ Deno.serve(async (req) => {
       })
 
     if (ratingError) {
-      console.error('Error inserting rating:', ratingError)
       throw ratingError
     }
 
@@ -74,12 +96,11 @@ Deno.serve(async (req) => {
         .maybeSingle()
 
       if (reverseError) {
-        console.error('Error checking reverse rating:', reverseError)
+        // Continue without blocking the rating
       }
 
       // If both rated each other 8+, create a match
       if (reverseRating && reverseRating.rating_value >= 8) {
-        console.log('Mutual high rating detected! Creating match...')
 
         // Check if match already exists
         const { data: existingMatch } = await supabase
@@ -100,9 +121,8 @@ Deno.serve(async (req) => {
             .single()
 
           if (matchError) {
-            console.error('Error creating match:', matchError)
+            // Match creation failed
           } else if (newMatch) {
-            console.log('Match created:', newMatch.id)
 
             // Create a chat for this match
             const { error: chatError } = await supabase
@@ -112,14 +132,12 @@ Deno.serve(async (req) => {
               })
 
             if (chatError) {
-              console.error('Error creating chat:', chatError)
+              // Chat creation failed
             } else {
-              console.log('Chat created for match')
               matched = true
             }
           }
         } else {
-          console.log('Match already exists')
           matched = true
         }
       }
@@ -139,7 +157,6 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in handle-rating function:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({ error: errorMessage }),

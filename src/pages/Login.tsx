@@ -45,7 +45,6 @@ export const Login = () => {
           .maybeSingle()
 
         if (profileError) {
-          console.error("Profile lookup error:", profileError)
           toast.error("Error looking up username. Please try again.")
           return
         }
@@ -72,7 +71,6 @@ export const Login = () => {
         navigate("/feed")
       }, 1000)
     } catch (error: any) {
-      console.error("Login error:", error)
       toast.error(error.message || "Failed to login. Please check your credentials.")
     }
   }
