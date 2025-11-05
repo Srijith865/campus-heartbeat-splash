@@ -128,10 +128,34 @@ export const CreateAccount = () => {
           // User is auto-confirmed and logged in
           toast.success("Account created successfully! 🎉")
           
-          // Navigate to feed page after successful account creation
-          setTimeout(() => {
+          // Wait for the profile to be created by the trigger
+          const waitForProfile = async () => {
+            let attempts = 0
+            const maxAttempts = 10
+            
+            while (attempts < maxAttempts) {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', authData.user.id)
+                .single()
+              
+              if (profile) {
+                // Profile exists, safe to navigate
+                navigate("/feed")
+                return
+              }
+              
+              // Wait 500ms before next attempt
+              await new Promise(resolve => setTimeout(resolve, 500))
+              attempts++
+            }
+            
+            // If profile still not found after all attempts, navigate anyway
             navigate("/feed")
-          }, 1500)
+          }
+          
+          waitForProfile()
         } else {
           // Email confirmation is required
           toast.success("Account created! Please check your email to confirm your account.")
