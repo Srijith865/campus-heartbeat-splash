@@ -14,42 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      bookmarks: {
-        Row: {
-          bookmarked_user_id: string
-          created_at: string | null
-          id: string
-          user_id: string
-        }
-        Insert: {
-          bookmarked_user_id: string
-          created_at?: string | null
-          id?: string
-          user_id: string
-        }
-        Update: {
-          bookmarked_user_id?: string
-          created_at?: string | null
-          id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bookmarks_bookmarked_user_id_fkey"
-            columns: ["bookmarked_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookmarks_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chats: {
         Row: {
           created_at: string | null

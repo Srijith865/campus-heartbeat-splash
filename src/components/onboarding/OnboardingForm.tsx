@@ -48,6 +48,7 @@ export const OnboardingForm = () => {
     }
 
     toast.success("Welcome to the app! 💕")
+    console.log("Form submitted:", formData)
     
     // Navigate to create account page
     setTimeout(() => {

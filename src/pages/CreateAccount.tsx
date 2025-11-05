@@ -74,6 +74,21 @@ export const CreateAccount = () => {
     isBioValid &&
     isAgeValid
 
+  // Debug logging for validation state
+  const validationState = {
+    hasUsername: formData.username.trim().length > 0,
+    isUsernameAvailable,
+    isEmailValid,
+    isPasswordStrong,
+    passwordsMatch,
+    hasPhotos: formData.photos.length > 0,
+    hasPersonality: formData.personality !== '',
+    hasInterests: formData.interests.length > 0,
+    isBioValid,
+    isFormValid
+  }
+  
+  console.log("Final validation state:", validationState)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,35 +142,12 @@ export const CreateAccount = () => {
         if (authData.session) {
           // User is auto-confirmed and logged in
           toast.success("Account created successfully! 🎉")
+          console.log("Account created with photos:", formData.photos)
           
-          // Wait for the profile to be created by the trigger
-          const waitForProfile = async () => {
-            let attempts = 0
-            const maxAttempts = 10
-            
-            while (attempts < maxAttempts) {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('id', authData.user.id)
-                .single()
-              
-              if (profile) {
-                // Profile exists, safe to navigate
-                navigate("/feed")
-                return
-              }
-              
-              // Wait 500ms before next attempt
-              await new Promise(resolve => setTimeout(resolve, 500))
-              attempts++
-            }
-            
-            // If profile still not found after all attempts, navigate anyway
+          // Navigate to feed page after successful account creation
+          setTimeout(() => {
             navigate("/feed")
-          }
-          
-          waitForProfile()
+          }, 1500)
         } else {
           // Email confirmation is required
           toast.success("Account created! Please check your email to confirm your account.")
@@ -165,6 +157,7 @@ export const CreateAccount = () => {
         }
       }
     } catch (error: any) {
+      console.error("Account creation error:", error)
       toast.error(error.message || "Failed to create account. Please try again.")
     } finally {
       setIsSubmitting(false)
