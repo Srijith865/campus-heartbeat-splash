@@ -38,10 +38,11 @@ export const UsernameInput = ({ value, onChange, onAvailabilityChange }: Usernam
     const checkAvailability = setTimeout(async () => {
       try {
         // Check if username exists in the database
+        const normalized = value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase()
         const { data, error } = await supabase
           .from('profiles')
           .select('username')
-          .ilike('username', value)
+          .eq('username', normalized)
           .maybeSingle()
         
         if (error) {
