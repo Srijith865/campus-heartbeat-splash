@@ -130,15 +130,18 @@ export const CreateAccount = () => {
           
           // Wait for the profile to be created by the trigger
           const waitForProfile = async () => {
+            // Give the trigger initial time to execute
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            
             let attempts = 0
-            const maxAttempts = 10
+            const maxAttempts = 20
             
             while (attempts < maxAttempts) {
-              const { data: profile } = await supabase
+              const { data: profile, error } = await supabase
                 .from('profiles')
                 .select('id')
                 .eq('id', authData.user.id)
-                .single()
+                .maybeSingle()
               
               if (profile) {
                 // Profile exists, safe to navigate
@@ -151,8 +154,9 @@ export const CreateAccount = () => {
               attempts++
             }
             
-            // If profile still not found after all attempts, navigate anyway
-            navigate("/feed")
+            // If profile still not found after all attempts, show error
+            toast.error("Profile creation is taking longer than expected. Please try logging in again.")
+            navigate("/login")
           }
           
           waitForProfile()
