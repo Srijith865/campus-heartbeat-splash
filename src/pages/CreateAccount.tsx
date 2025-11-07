@@ -69,6 +69,7 @@ export const CreateAccount = () => {
     isPasswordStrong &&
     passwordsMatch &&
     formData.photos.length > 0 &&
+    formData.gender !== '' &&
     formData.personality !== '' &&
     formData.interests.length > 0 &&
     isBioValid &&
