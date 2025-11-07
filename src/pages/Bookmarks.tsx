@@ -31,8 +31,42 @@ const Bookmarks = () => {
 
       setCurrentUserId(user.id)
       
-      // Bookmarks feature temporarily disabled
-      setBookmarkedProfiles([])
+      // Fetch bookmarked profiles
+      const { data: bookmarks, error: bookmarksError } = await supabase
+        .from('bookmarks')
+        .select('bookmarked_user_id')
+        .eq('user_id', user.id)
+
+      if (bookmarksError) {
+        console.error('Error fetching bookmarks:', bookmarksError)
+        setBookmarkedProfiles([])
+        return
+      }
+
+      if (!bookmarks || bookmarks.length === 0) {
+        setBookmarkedProfiles([])
+        return
+      }
+
+      // Fetch the full profiles of bookmarked users
+      const bookmarkedUserIds = bookmarks.map(b => b.bookmarked_user_id)
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', bookmarkedUserIds)
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError)
+        setBookmarkedProfiles([])
+        return
+      }
+
+      // Map profiles to match the Profile type
+      const mappedProfiles = (profiles || []).map(p => ({
+        ...p,
+        interests: Array.isArray(p.interests) ? p.interests : []
+      }))
+      setBookmarkedProfiles(mappedProfiles as Profile[])
     } catch (error) {
       console.error('Error fetching bookmarks:', error)
     } finally {
