@@ -6,6 +6,7 @@ import { Star, Bookmark } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getCompatibilityScore } from '@/services/aiService'
 import { showBookmarkNotification } from '@/services/notificationService'
+import { supabase } from '@/integrations/supabase/client'
 
 interface Profile {
   id: string
@@ -37,17 +38,81 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   const [isBookmarked, setIsBookmarked] = useState(false)
   const { toast } = useToast()
 
+  // Check if profile is already bookmarked
+  useEffect(() => {
+    const checkBookmark = async () => {
+      if (!currentUserId) return
+      
+      const { data } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .eq('bookmarked_user_id', profile.id)
+        .maybeSingle()
+      
+      setIsBookmarked(!!data)
+    }
+    
+    checkBookmark()
+  }, [currentUserId, profile.id])
+
   // Calculate AI compatibility score
   const compatibilityScore = currentUserProfile
     ? getCompatibilityScore(currentUserProfile, profile)
     : Math.floor(Math.random() * 30) + 70
 
   const handleBookmark = async () => {
-    // Bookmark functionality temporarily disabled
-    toast({
-      title: "Coming Soon",
-      description: "Bookmark feature will be available soon!",
-    })
+    if (!currentUserId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to bookmark profiles",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      if (isBookmarked) {
+        // Remove bookmark
+        const { error } = await supabase
+          .from('bookmarks')
+          .delete()
+          .eq('user_id', currentUserId)
+          .eq('bookmarked_user_id', profile.id)
+
+        if (error) throw error
+
+        setIsBookmarked(false)
+        toast({
+          title: "Bookmark removed",
+          description: `${profile.username} has been removed from your bookmarks`
+        })
+      } else {
+        // Add bookmark
+        const { error } = await supabase
+          .from('bookmarks')
+          .insert({
+            user_id: currentUserId,
+            bookmarked_user_id: profile.id
+          })
+
+        if (error) throw error
+
+        setIsBookmarked(true)
+        showBookmarkNotification(true, profile.username)
+      }
+
+      // Notify parent component
+      if (onBookmarkChange) {
+        onBookmarkChange()
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update bookmark",
+        variant: "destructive"
+      })
+    }
   }
 
   if (isLoading) {
