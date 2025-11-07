@@ -111,7 +111,7 @@ export const CreateAccount = () => {
             age: formData.age,
             personality: formData.personality,
             gender: formData.gender,
-            interests: JSON.stringify(formData.interests),
+            interests: formData.interests,
             photos: formData.photos,
             main_photo_url: mainPhotoUrl
           }

@@ -33,50 +33,8 @@ const Feed: React.FC = () => {
 
   useEffect(() => {
     fetchCurrentUserAndProfiles()
-    setupRealtimeSubscriptions()
   }, [])
 
-  const setupRealtimeSubscriptions = () => {
-  if (!currentUserId) return
-
-  // Setup match notifications
-  setupMatchNotifications(currentUserId)
-    // Listen for new matches
-    const matchesChannel = supabase
-      .channel('matches-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'matches',
-          filter: `user1_id=eq.${currentUserId},user2_id=eq.${currentUserId}`
-        },
-        (payload) => {
-          // Get the matched user's username
-          const matchedUserId = payload.new.user1_id === currentUserId
-            ? payload.new.user2_id
-            : payload.new.user1_id
-
-          // Fetch the matched user's profile
-          supabase
-            .from('profiles')
-            .select('username')
-            .eq('id', matchedUserId)
-            .single()
-            .then(({ data }) => {
-              if (data) {
-                showMatchNotification(data.username, payload.new.id)
-              }
-            })
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(matchesChannel)
-    }
-  }
 
   const fetchCurrentUserAndProfiles = async () => {
     try {
@@ -135,6 +93,9 @@ const Feed: React.FC = () => {
       setCurrentUserGender(profile.gender)
       setCurrentUserId(profile.id)
       setCurrentUserProfile(currentProfile)
+      
+      // Setup realtime after we have the user ID
+      setupMatchNotifications(profile.id)
 
       // Fetch all opposite gender profiles for AI analysis
       const oppositeGender = profile.gender === 'male' ? 'female' : 'male'

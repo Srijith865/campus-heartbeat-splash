@@ -65,7 +65,17 @@ const Account: React.FC = () => {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
+      
+      if (!data) {
+        toast({
+          title: "Profile not found",
+          description: "Please complete your profile setup",
+          variant: "destructive"
+        })
+        navigate('/create-account')
+        return
+      }
 
       if (error) throw error
 
