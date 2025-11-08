@@ -5,6 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { searchProfiles } from '@/services/searchService'
+import { supabase } from '@/integrations/supabase/client'
+import { Profile } from '@/services/aiService'
 
 interface SearchResult {
   id: string
@@ -65,17 +68,73 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({ onProfileSelect, classN
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
-      const data = await response.json()
-
-      if (data.success) {
-        setResults(data.results)
-        setIsOpen(data.results.length > 0)
-        setSelectedIndex(-1)
-      } else {
+      // Get current user to exclude from results
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
         setResults([])
         setIsOpen(false)
+        return
       }
+
+      // Get current user's profile to determine opposite gender
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('gender')
+        .eq('id', user.id)
+        .single()
+
+      if (!currentProfile?.gender) {
+        setResults([])
+        setIsOpen(false)
+        return
+      }
+
+      // Fetch all opposite gender profiles
+      const oppositeGender = currentProfile.gender === 'male' ? 'female' : 'male'
+      const { data: allProfiles } = await supabase
+        .from('profiles')
+        .select('id, username, main_photo_url, interests, bio, gender, age, personality')
+        .eq('gender', oppositeGender)
+        .eq('is_visible', true)
+        .eq('is_active', true)
+        .neq('id', user.id)
+
+      if (!allProfiles || allProfiles.length === 0) {
+        setResults([])
+        setIsOpen(false)
+        setIsLoading(false)
+        return
+      }
+
+      // Transform interests from Tag objects to strings
+      const transformedProfiles: Profile[] = allProfiles.map((profile: any) => ({
+        ...profile,
+        interests: Array.isArray(profile.interests) 
+          ? profile.interests.map((interest: any) => 
+              typeof interest === 'string' ? interest : interest.text
+            )
+          : []
+      }))
+
+      // Use local search service
+      const searchResults = searchProfiles(searchQuery, transformedProfiles)
+      
+      // Transform to SearchResult format
+      const formattedResults: SearchResult[] = searchResults.map(result => ({
+        id: result.profile.id,
+        username: result.profile.username,
+        main_photo_url: result.profile.main_photo_url,
+        bio: result.profile.bio,
+        age: result.profile.age,
+        gender: result.profile.gender,
+        interests: result.profile.interests,
+        score: result.score,
+        matchType: result.matchType
+      }))
+
+      setResults(formattedResults)
+      setIsOpen(formattedResults.length > 0)
+      setSelectedIndex(-1)
     } catch (error) {
       console.error('Search error:', error)
       setResults([])
