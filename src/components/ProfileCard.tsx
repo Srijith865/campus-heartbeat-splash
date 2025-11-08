@@ -8,11 +8,17 @@ import { getCompatibilityScore } from '@/services/aiService'
 import { showBookmarkNotification } from '@/services/notificationService'
 import { supabase } from '@/integrations/supabase/client'
 
+interface Tag {
+  id: string
+  text: string
+  isCustom?: boolean
+}
+
 interface Profile {
   id: string
   username: string
   main_photo_url?: string
-  interests?: string[]
+  interests?: (string | Tag)[]
   bio?: string
   age?: number
 }
@@ -56,9 +62,24 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     checkBookmark()
   }, [currentUserId, profile.id])
 
+  // Normalize interests to strings for compatibility calculation
+  const normalizedCurrentProfile = currentUserProfile ? {
+    ...currentUserProfile,
+    interests: currentUserProfile.interests?.map(i => 
+      typeof i === 'string' ? i : i.text
+    )
+  } : undefined
+
+  const normalizedProfile = {
+    ...profile,
+    interests: profile.interests?.map(i => 
+      typeof i === 'string' ? i : i.text
+    )
+  }
+
   // Calculate AI compatibility score
-  const compatibilityScore = currentUserProfile
-    ? getCompatibilityScore(currentUserProfile, profile)
+  const compatibilityScore = normalizedCurrentProfile
+    ? getCompatibilityScore(normalizedCurrentProfile as any, normalizedProfile as any)
     : Math.floor(Math.random() * 30) + 70
 
   const handleBookmark = async () => {
@@ -190,11 +211,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
           {profile.interests && profile.interests.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {profile.interests.slice(0, 6).map((interest, index) => (
-                <Badge key={index} variant="secondary">
-                  {interest}
-                </Badge>
-              ))}
+              {profile.interests.slice(0, 6).map((interest, index) => {
+                // Handle both string and Tag object formats
+                const interestText = typeof interest === 'string' ? interest : interest.text
+                return (
+                  <Badge key={index} variant="secondary">
+                    {interestText}
+                  </Badge>
+                )
+              })}
             </div>
           )}
 
