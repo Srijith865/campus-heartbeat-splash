@@ -141,12 +141,15 @@ const Account: React.FC = () => {
     if (!profile) return
     
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('profiles')
         .update({ is_visible: !enabled })
         .eq('id', profile.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('DND toggle error:', error)
+        throw error
+      }
 
       setProfile({ ...profile, is_visible: !enabled })
       toast({
@@ -154,9 +157,10 @@ const Account: React.FC = () => {
         description: enabled ? "Your profile is now hidden from feeds" : "Your profile is now visible in feeds",
       })
     } catch (error: any) {
+      console.error('DND toggle catch error:', error)
       toast({
         title: "Error",
-        description: "Failed to update DND status",
+        description: error.message || "Failed to update DND status",
         variant: "destructive"
       })
     }
@@ -166,7 +170,7 @@ const Account: React.FC = () => {
     if (!profile) return
     
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('profiles')
         .update({ is_active: false })
         .eq('id', profile.id)
