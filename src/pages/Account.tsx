@@ -203,8 +203,8 @@ const Account: React.FC = () => {
         throw new Error('No valid session found')
       }
 
-      // Call the delete account API
-      const response = await fetch('/api/delete-account', {
+      // Call the delete account edge function
+      const response = await fetch('https://qtgziyngrhdpdlvryoow.supabase.co/functions/v1/delete-account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
