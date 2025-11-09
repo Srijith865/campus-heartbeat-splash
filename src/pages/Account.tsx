@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { CloudinaryUpload } from '@/components/ui/cloudinary-upload'
 import { TagPicker } from '@/components/ui/tag-picker'
+import { UsernameInput } from '@/components/ui/username-input'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, Save, LogOut, EyeOff, Eye, Trash2, UserX, Bookmark } from 'lucide-react'
 import TopBar from '@/components/TopBar'
@@ -48,6 +49,7 @@ const Account: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<ProfileData | null>(null)
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(true)
 
   useEffect(() => {
     fetchProfile()
@@ -111,6 +113,7 @@ const Account: React.FC = () => {
       const { error } = await (supabase as any)
         .from('profiles')
         .update({
+          username: profile.username,
           bio: profile.bio,
           age: profile.age,
           interests: interestsToSave,
@@ -307,13 +310,13 @@ const Account: React.FC = () => {
             />
           </div>
 
-          {/* Username (readonly) */}
+          {/* Username */}
           <div>
             <label className="block text-sm font-medium mb-2">Username</label>
-            <Input
+            <UsernameInput
               value={profile.username}
-              disabled
-              className="bg-muted"
+              onChange={(value) => setProfile({ ...profile, username: value })}
+              onAvailabilityChange={setIsUsernameAvailable}
             />
           </div>
 
@@ -392,7 +395,7 @@ const Account: React.FC = () => {
           {/* Save Button */}
           <Button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !isUsernameAvailable}
             className="w-full"
             size="lg"
           >
