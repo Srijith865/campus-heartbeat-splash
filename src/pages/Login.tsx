@@ -8,6 +8,15 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { FloatingHearts } from "@/components/ui/floating-hearts"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
+import { UserCheck } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export const Login = () => {
   const navigate = useNavigate()
@@ -15,6 +24,8 @@ export const Login = () => {
     emailOrUsername: "",
     password: ""
   })
+  const [showReactivateDialog, setShowReactivateDialog] = useState(false)
+  const [deactivatedUserId, setDeactivatedUserId] = useState<string | null>(null)
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emailOrUsername)
   const isUsernameValid = formData.emailOrUsername.length >= 3 && !/\s/.test(formData.emailOrUsername)
@@ -64,6 +75,21 @@ export const Login = () => {
 
       if (error) throw error
 
+      // Check if the account is deactivated
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_active')
+          .eq('id', data.user.id)
+          .single()
+
+        if (!profileError && profile && !profile.is_active) {
+          setDeactivatedUserId(data.user.id)
+          setShowReactivateDialog(true)
+          return
+        }
+      }
+
       toast.success("Welcome back! 🎉")
       
       // Redirect to feed page after successful login
@@ -77,6 +103,35 @@ export const Login = () => {
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleReactivate = async () => {
+    if (!deactivatedUserId) return
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: true })
+        .eq('id', deactivatedUserId)
+
+      if (error) throw error
+
+      toast.success("Welcome back! Your account has been reactivated 🎉")
+
+      setShowReactivateDialog(false)
+      
+      setTimeout(() => {
+        navigate('/feed')
+      }, 1000)
+    } catch (error: any) {
+      toast.error("Failed to reactivate account. Please try again.")
+    }
+  }
+
+  const handleCancelReactivation = async () => {
+    await supabase.auth.signOut()
+    setShowReactivateDialog(false)
+    setDeactivatedUserId(null)
   }
 
   return (
@@ -199,6 +254,53 @@ export const Login = () => {
           </motion.div>
         </motion.div>
       </motion.div>
+
+      {/* Reactivation Dialog */}
+      <AlertDialog open={showReactivateDialog} onOpenChange={setShowReactivateDialog}>
+        <AlertDialogContent className="max-w-md border-border/50">
+          <AlertDialogHeader>
+            <motion.div 
+              className="flex justify-center mb-4"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", duration: 0.6 }}
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <UserCheck className="w-8 h-8 text-primary" />
+              </div>
+            </motion.div>
+            <AlertDialogTitle className="text-center text-2xl">
+              Welcome Back!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center space-y-3">
+              <p className="text-base text-foreground/80">
+                Your account was deactivated, but we're glad to see you again.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Would you like to reactivate your account and restore full access to all features?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-col gap-2 mt-4">
+            <Button
+              onClick={handleReactivate}
+              variant="premium"
+              size="lg"
+              className="w-full"
+            >
+              <UserCheck className="w-4 h-4 mr-2" />
+              Reactivate My Account
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCancelReactivation}
+              className="w-full"
+            >
+              Not Now
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
