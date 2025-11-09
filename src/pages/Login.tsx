@@ -52,7 +52,7 @@ export const Login = () => {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('email')
-          .eq('username', formData.emailOrUsername)
+          .ilike('username', formData.emailOrUsername)
           .maybeSingle()
 
         if (profileError) {

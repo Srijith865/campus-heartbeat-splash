@@ -9,6 +9,7 @@ interface UsernameInputProps {
   value: string
   onChange: (value: string) => void
   onAvailabilityChange: (available: boolean) => void
+  currentUserId?: string
 }
 
 const generateSuggestions = (username: string): string[] => {
@@ -20,7 +21,7 @@ const generateSuggestions = (username: string): string[] => {
   ]
 }
 
-export const UsernameInput = ({ value, onChange, onAvailabilityChange }: UsernameInputProps) => {
+export const UsernameInput = ({ value, onChange, onAvailabilityChange, currentUserId }: UsernameInputProps) => {
   const [isChecking, setIsChecking] = useState(false)
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -37,12 +38,18 @@ export const UsernameInput = ({ value, onChange, onAvailabilityChange }: Usernam
     
     const checkAvailability = setTimeout(async () => {
       try {
-        // Check if username exists in the database
-        const { data, error } = await supabase
+        // Check if username exists in the database (excluding current user)
+        let query = supabase
           .from('profiles')
-          .select('username')
+          .select('id, username')
           .ilike('username', value)
-          .maybeSingle()
+        
+        // Exclude current user if provided
+        if (currentUserId) {
+          query = query.neq('id', currentUserId)
+        }
+        
+        const { data, error } = await query.maybeSingle()
         
         if (error) {
           setIsAvailable(null)

@@ -317,6 +317,7 @@ const Account: React.FC = () => {
               value={profile.username}
               onChange={(value) => setProfile({ ...profile, username: value })}
               onAvailabilityChange={setIsUsernameAvailable}
+              currentUserId={profile.id}
             />
           </div>
 
