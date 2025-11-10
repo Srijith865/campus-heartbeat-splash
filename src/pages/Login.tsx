@@ -49,10 +49,13 @@ export const Login = () => {
 
       // If input is not an email, treat it as username and fetch email from profiles
       if (!isEmailValid) {
+        // Normalize username input: trim spaces and strip leading '@'
+        const normalizedUsername = formData.emailOrUsername.trim().replace(/^@/, "")
+
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('email')
-          .ilike('username', formData.emailOrUsername)
+          .ilike('username', normalizedUsername)
           .maybeSingle()
 
         if (profileError) {
@@ -61,13 +64,8 @@ export const Login = () => {
           return
         }
 
-        if (!profileData) {
+        if (!profileData || !profileData.email) {
           toast.error("Username not found. Please check your username.")
-          return
-        }
-
-        if (!profileData.email) {
-          toast.error("Email not found for this username. Please use your email to login.")
           return
         }
 
