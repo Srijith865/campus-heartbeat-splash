@@ -56,12 +56,18 @@ export const Login = () => {
           .maybeSingle()
 
         if (profileError) {
+          console.error("Profile lookup error:", profileError)
           toast.error("Error looking up username. Please try again.")
           return
         }
 
-        if (!profileData || !profileData.email) {
+        if (!profileData) {
           toast.error("Username not found. Please check your username.")
+          return
+        }
+
+        if (!profileData.email) {
+          toast.error("Email not found for this username. Please use your email to login.")
           return
         }
 
