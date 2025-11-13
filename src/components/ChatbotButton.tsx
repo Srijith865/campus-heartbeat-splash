@@ -3,10 +3,18 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { MessageCircle, Bot } from 'lucide-react'
 import Chatbot from './Chatbot'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { useLocation } from 'react-router-dom'
 
 const ChatbotButton: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
+  const isMobile = useIsMobile()
+  const location = useLocation()
+  
+  // Hide chatbot on mobile devices or on chat pages
+  const isChatPage = location.pathname.startsWith('/chat')
+  const shouldHide = isMobile || isChatPage
 
   const handleToggle = () => {
     if (isMinimized) {
@@ -25,6 +33,11 @@ const ChatbotButton: React.FC = () => {
   const handleMinimize = () => {
     setIsOpen(false)
     setIsMinimized(true)
+  }
+
+  // Don't render on mobile or chat pages
+  if (shouldHide) {
+    return null
   }
 
   return (
